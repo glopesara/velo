@@ -1,29 +1,21 @@
-import { test } from "@playwright/test";
-
+import { expect, test } from "../support/fixtures";
 import { generateOrderCode } from "../support/helpers";
-import { HomePage } from "../support/pages/HomePage";
-import { NavbarComponent } from "../support/components/NavbarComponent";
-import { OrderLockupPage } from "../support/pages/OrderLockupPage";
 
 /// AAA - Arrange, Act, Assert
 
 test.describe("Consulta de Pedido", () => {
-  let orderLockupPage: OrderLockupPage;
-
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ app }) => {
     // Home (passos 1–2)
-    const homePage = new HomePage(page).goto();
+    // await app.home.goto();
 
-    // Navbar (passo 3)
-    const navbar = new NavbarComponent(page);
-    await navbar.goToConsultarPedido();
+    // // Navbar (passo 3)
+    // await app.navbar.goToConsultarPedido();
 
     // OrderLookupPage (passo 4)
-    orderLockupPage = new OrderLockupPage(page);
-    await orderLockupPage.expectPageLoaded();
+    await app.orderLockup.open();
   });
 
-  test("deve consultar um pedido aprovado", async ({ page }) => {
+  test("deve consultar um pedido aprovado", async ({ app }) => {
     // Test Data
     const order = {
       number: "VLO-2OE0BV",
@@ -38,16 +30,16 @@ test.describe("Consulta de Pedido", () => {
     };
 
     // Act
-    await orderLockupPage.searchOrder(order.number);
+    await app.orderLockup.searchOrder(order.number);
 
     // Assert
-    await orderLockupPage.validateOrderDatails(order);
+    await app.orderLockup.validateOrderDatails(order);
 
-    // Validação do badge de status encapsulada no Page Object
-    await orderLockupPage.validateStatusBadge(order.status);
+    // Validação do badge de status encapsulada na Action
+    await app.orderLockup.validateStatusBadge(order.status);
   });
 
-  test("deve consultar um pedido reprovado", async ({ page }) => {
+  test("deve consultar um pedido reprovado", async ({ app }) => {
     // Test Data
     const order = {
       number: "VLO-ZYMRS8",
@@ -62,17 +54,16 @@ test.describe("Consulta de Pedido", () => {
     };
 
     // Act
-
-    await orderLockupPage.searchOrder(order.number);
+    await app.orderLockup.searchOrder(order.number);
 
     // Assert
-    await orderLockupPage.validateOrderDatails(order);
+    await app.orderLockup.validateOrderDatails(order);
 
-    // Validação do badge de status encapsulada no Page Object
-    await orderLockupPage.validateStatusBadge(order.status);
+    // Validação do badge de status encapsulada na Action
+    await app.orderLockup.validateStatusBadge(order.status);
   });
 
-  test("deve consultar um pedido em analise", async ({ page }) => {
+  test("deve consultar um pedido em analise", async ({ app }) => {
     // Test Data
     const order = {
       number: "VLO-3FC09T",
@@ -87,31 +78,39 @@ test.describe("Consulta de Pedido", () => {
     };
 
     // Act
-
-    await orderLockupPage.searchOrder(order.number);
+    await app.orderLockup.searchOrder(order.number);
 
     // Assert
-    await orderLockupPage.validateOrderDatails(order);
+    await app.orderLockup.validateOrderDatails(order);
 
-    // Validação do badge de status encapsulada no Page Object
-    await orderLockupPage.validateStatusBadge(order.status);
+    // Validação do badge de status encapsulada na Action
+    await app.orderLockup.validateStatusBadge(order.status);
   });
 
   test("deve exibir mensagem quando o pedido não é encontrado", async ({
-    page,
+    app,
   }) => {
     const order = generateOrderCode();
 
-    await orderLockupPage.searchOrder(order);
+    await app.orderLockup.searchOrder(order);
 
-    await orderLockupPage.validateOrderNotFound();
+    await app.orderLockup.validateOrderNotFound();
   });
 
   test("deve exibir mensagem quando o pedido em qualquer formato não é encontrado", async ({
+    app,
+  }) => {
+    await app.orderLockup.searchOrder("abc12345");
+
+    await app.orderLockup.validateOrderNotFound();
+  });
+
+  test("deve manter o botão de busca desabilitado com o input vazio ou apenas espaços", async ({
+    app,
     page,
   }) => {
-    await orderLockupPage.searchOrder("abc12345");
+    const button = app.orderLockup.elements.orderButton;
 
-    await orderLockupPage.validateOrderNotFound();
+    await expect(button).toBeDisabled();
   });
 });

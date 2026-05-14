@@ -7,3 +7,4 @@ export class NavbarComponent {
     await this.page.getByRole("link", { name: "Consultar Pedido" }).click();
   }
 }
+

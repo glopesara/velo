@@ -10,3 +10,4 @@ export class HomePage {
     ).toContainText("Velô Sprint");
   }
 }
+
