@@ -1,0 +1,35 @@
+{
+  "aprovado": {
+    "number": "VLO-SE4R01",
+    "status": "APROVADO",
+    "color": "Glacier Blue",
+    "wheels": "aero Wheels",
+    "customer": {
+      "name": "Teste Aprovado",
+      "email": "teste@teste.com"
+    },
+    "payment": "À Vista"
+  },
+  "reprovado": {
+    "number": "VLO-SE4R02",
+    "status": "REPROVADO",
+    "color": "Glacier Blue",
+    "wheels": "aero Wheels",
+    "customer": {
+      "name": "Teste Araujo",
+      "email": "teste@teste.com"
+    },
+    "payment": "À Vista"
+  },
+  "em_analise": {
+    "number": "VLO-SE4R03",
+    "status": "EM_ANALISE",
+    "color": "Glacier Blue",
+    "wheels": "aero Wheels",
+    "customer": {
+      "name": "Teste Analise",
+      "email": "teste@teste.com"
+    },
+    "payment": "À Vista"
+  }
+}
