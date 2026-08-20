@@ -3,7 +3,7 @@ import { Page, expect } from "@playwright/test";
 export function createCheckoutActions(page: Page) {
   return {
     async open() {
-      await page.goto("http://localhost:5173/order");
+      await page.goto("/order");
     },
 
     async submitOrder() {
@@ -79,8 +79,8 @@ export function createCheckoutActions(page: Page) {
     },
 
     async fillDownPayment(value: string) {
-      const cleanValue = value.includes(",") 
-        ? value.split(",")[0].replace(/\D/g, "") 
+      const cleanValue = value.includes(",")
+        ? value.split(",")[0].replace(/\D/g, "")
         : value.replace(/\D/g, "");
       await page.getByTestId("input-entry-value").fill(cleanValue);
     },
