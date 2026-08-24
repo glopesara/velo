@@ -10,7 +10,8 @@ on:
 
 env:
   NODE_VERSION: '24'
-
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  VERCEL_SCOPE: ${{ secrets.VERCEL_SCOPE }}
 jobs:
   unit-tests:
     name: Unit Tests
@@ -38,3 +39,35 @@ jobs:
       # Executa a suíte de testes unitários
       - name: Run Unit Tests
         run: yarn test
+
+  build-and-deploy:
+    name: Build and Deploy Vercel Preview
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+
+    steps:
+      # Baixa o código-fonte do repositório para o runner
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      # Configura a versão do Node.js definida na variável global
+      - name: Setup Node.js
+        uses: actions/setup-node@v6.5.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # Habilita o corepack, necessário para usar o Yarn moderno
+      - name: Enable Corepack
+        run: corepack enable
+
+      # Instala as dependências do projeto
+      - name: Install Dependencies
+        run: yarn install
+
+      # Executa a suíte de testes unitários
+      - name: Build Vercel
+        run: yarn vercel build --token=$VERCEL_TOKEN
+
+      # Executa a suíte de testes unitários
+      - name: Deploy Vercel Preview
+        run: yarn vercel deploy --prebuilt --target=preview --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
