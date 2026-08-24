@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { 
   calculateTotalPrice, 
   calculateInstallment, 
   formatPrice,
-  CarConfiguration
+  CarConfiguration,
+  useConfiguratorStore
 } from './configuratorStore';
 
 describe('configuratorStore functions', () => {
@@ -67,6 +68,65 @@ describe('configuratorStore functions', () => {
       // Format can use different whitespace characters (e.g. non-breaking space)
       const cleanString = formatted.replace(/[\s\u00A0\u202F]/g, '');
       expect(cleanString).toBe('R$40.000,00');
+    });
+  });
+
+  describe('useConfiguratorStore', () => {
+    beforeEach(() => {
+      useConfiguratorStore.getState().resetConfiguration();
+    });
+
+    it('should set exterior color and update view mode to exterior', () => {
+      const store = useConfiguratorStore.getState();
+      store.setExteriorColor('midnight-black');
+      
+      const updatedStore = useConfiguratorStore.getState();
+      expect(updatedStore.configuration.exteriorColor).toBe('midnight-black');
+      expect(updatedStore.viewMode).toBe('exterior');
+    });
+
+    it('should set interior color and update view mode to interior', () => {
+      const store = useConfiguratorStore.getState();
+      store.setInteriorColor('deep-blue');
+      
+      const updatedStore = useConfiguratorStore.getState();
+      expect(updatedStore.configuration.interiorColor).toBe('deep-blue');
+      expect(updatedStore.viewMode).toBe('interior');
+    });
+
+    it('should set wheel type', () => {
+      const store = useConfiguratorStore.getState();
+      store.setWheelType('sport');
+      
+      const updatedStore = useConfiguratorStore.getState();
+      expect(updatedStore.configuration.wheelType).toBe('sport');
+    });
+
+    it('should toggle optionals correctly', () => {
+      const store = useConfiguratorStore.getState();
+      
+      // Add optional
+      store.toggleOptional('precision-park');
+      expect(useConfiguratorStore.getState().configuration.optionals).toContain('precision-park');
+      
+      // Remove optional
+      store.toggleOptional('precision-park');
+      expect(useConfiguratorStore.getState().configuration.optionals).not.toContain('precision-park');
+    });
+
+    it('should reset configuration to default values', () => {
+      const store = useConfiguratorStore.getState();
+      store.setExteriorColor('midnight-black');
+      store.setWheelType('sport');
+      store.toggleOptional('precision-park');
+      
+      store.resetConfiguration();
+      
+      const resetStore = useConfiguratorStore.getState();
+      expect(resetStore.configuration.exteriorColor).toBe('glacier-blue');
+      expect(resetStore.configuration.interiorColor).toBe('carbon-black');
+      expect(resetStore.configuration.wheelType).toBe('aero');
+      expect(resetStore.configuration.optionals).toEqual([]);
     });
   });
 });
