@@ -66,6 +66,10 @@ jobs:
       - name: Install Dependencies
         run: yarn install
 
+      # Configura o Vercel CLI com as variáveis de ambiente
+      - name: Setup Vercel CLI
+        run: yarn vercel pull --yes --environment=preview --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
+
       # Executa a suíte de testes unitários
       - name: Build Vercel
         run: yarn vercel build --token=$VERCEL_TOKEN
