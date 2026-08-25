@@ -14,31 +14,22 @@ env:
   VERCEL_SCOPE: gabriel3-2455
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+
 jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
-
     steps:
-      # Baixa o código-fonte do repositório para o runner
       - name: Checkout Repository
         uses: actions/checkout@v7
-
-      # Configura a versão do Node.js definida na variável global
       - name: Setup Node.js
         uses: actions/setup-node@v6.5.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      # Habilita o corepack, necessário para usar o Yarn moderno
       - name: Enable Corepack
         run: corepack enable
-
-      # Instala as dependências do projeto
       - name: Install Dependencies
         run: yarn install
-
-      # Executa a suíte de testes unitários
       - name: Run Unit Tests
         run: yarn test
 
@@ -48,35 +39,21 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       deployment-url: ${{ steps.deploy-preview.outputs.deployment-url }}
-
     steps:
-      # Baixa o código-fonte do repositório para o runner
       - name: Checkout Repository
         uses: actions/checkout@v7
-
-      # Configura a versão do Node.js definida na variável global
       - name: Setup Node.js
         uses: actions/setup-node@v6.5.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      # Habilita o corepack, necessário para usar o Yarn moderno
       - name: Enable Corepack
         run: corepack enable
-
-      # Instala as dependências do projeto
       - name: Install Dependencies
         run: yarn install
-
-      # Configura o Vercel CLI com as variáveis de ambiente
       - name: Setup Vercel CLI
         run: yarn vercel pull --yes --environment=preview --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
-
-      # Executa a suíte de testes unitários
       - name: Build Vercel
         run: yarn vercel build --token=$VERCEL_TOKEN
-
-      # Executa a suíte de testes unitários
       - name: Deploy Vercel Preview
         id: deploy-preview
         run: |
@@ -89,54 +66,85 @@ jobs:
     name: Run E2E Tests
     needs: [build-and-deploy]
     runs-on: ubuntu-latest
-
     steps:
-      # Baixa o código-fonte do repositório para o runner
       - name: Checkout Repository
         uses: actions/checkout@v7
-
-      # Configura a versão do Node.js definida na variável global
       - name: Setup Node.js
         uses: actions/setup-node@v6.5.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      # Habilita o corepack, necessário para usar o Yarn moderno
       - name: Enable Corepack
         run: corepack enable
-
-      # Instala as dependências do projeto
       - name: Install Dependencies
         run: yarn install
-
-      # Instalação do chromium
       - name: Install Playwright Browser
         run: yarn playwright install --with-deps chromium
-
-      # Executa a suíte de testes e2e
       - name: Run E2E Tests
         run: yarn playwright test
         env:
           BASE_URL: ${{ needs.build-and-deploy.outputs.deployment-url }}
           TESTDINO_TOKEN: ${{ secrets.TESTDINO_TOKEN }}
-
-      # Arquivar resultados
       - name: Archive Test Results
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: playwright-report
+          name: playwright-report-preview
           path: playwright-report/
 
-  promote:
-    name: Promote to Production
+  deploy-production:
+    name: Deploy to Production
     needs: [build-and-deploy, e2e-tests]
     runs-on: ubuntu-latest
-
+    outputs:
+      deployment-url: ${{ steps.deploy-prod.outputs.deployment-url }}
     steps:
-      - name: Vercel Promote
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+      - name: Setup Node.js
+        uses: actions/setup-node@v6.5.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install Dependencies
+        run: yarn install
+      - name: Pull Vercel Prod Config
+        run: yarn vercel pull --yes --environment=production --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
+      - name: Build Vercel Prod
+        run: yarn vercel build --prod --token=$VERCEL_TOKEN
+      - name: Deploy Vercel Production
+        id: deploy-prod
         run: |
-          npx vercel@latest promote ${{ needs.build-and-deploy.outputs.deployment-url }} \
-            --token=$VERCEL_TOKEN \
-            --scope=$VERCEL_SCOPE \
-            --yes
+          URL=$(yarn --silent vercel deploy --prebuilt --prod \
+          --token=$VERCEL_TOKEN \
+          --scope=$VERCEL_SCOPE)
+          echo "deployment-url=$URL" >> $GITHUB_OUTPUT
+
+  e2e-tests-prod:
+    name: Run E2E Tests on Production
+    needs: [deploy-production]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+      - name: Setup Node.js
+        uses: actions/setup-node@v6.5.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install Dependencies
+        run: yarn install
+      - name: Install Playwright Browser
+        run: yarn playwright install --with-deps chromium
+      - name: Run E2E Tests
+        run: yarn playwright test
+        env:
+          BASE_URL: ${{ needs.deploy-production.outputs.deployment-url }}
+          TESTDINO_TOKEN: ${{ secrets.TESTDINO_TOKEN }}
+      - name: Archive Test Results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: playwright-report-production
+          path: playwright-report/
