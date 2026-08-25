@@ -80,7 +80,7 @@ jobs:
       - name: Deploy Vercel Preview
         id: deploy-preview
         run: |
-          URL=$(yarn vercel deploy --prebuilt --target=preview --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE)
+          URL=$(yarn --silent vercel deploy --prebuilt --target=preview --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE)
           echo "deployment-url=$URL" >> $GITHUB_OUTPUT
 
   e2e-tests:
@@ -118,8 +118,8 @@ jobs:
           BASE_URL: ${{ needs.build-and-deploy.outputs.deployment-url }}
 
       # Arquivar resultados
-      - name: Archve Test Results
-        if: ${{ !canceled() }}
+      - name: Archive Test Results
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7.0.1
         with:
           name: playwright-report
