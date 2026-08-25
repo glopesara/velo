@@ -46,6 +46,8 @@ jobs:
     name: Build and Deploy Vercel Preview
     needs: [unit-tests]
     runs-on: ubuntu-latest
+    outputs:
+      deployment-url: ${{ steps.deploy-preview.outputs.deployment-url }}
 
     steps:
       # Baixa o código-fonte do repositório para o runner
@@ -76,4 +78,49 @@ jobs:
 
       # Executa a suíte de testes unitários
       - name: Deploy Vercel Preview
-        run: yarn vercel deploy --prebuilt --target=preview --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
+        id: deploy-preview
+        run: |
+          URL=$(yarn vercel deploy --prebuilt --target=preview --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE)
+          echo "deployment-url=$URL" >> $GITHUB_OUTPUT
+
+  e2e-tests:
+    name: Run E2E Tests
+    needs: [build-and-deploy]
+    runs-on: ubuntu-latest
+
+    steps:
+      # Baixa o código-fonte do repositório para o runner
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      # Configura a versão do Node.js definida na variável global
+      - name: Setup Node.js
+        uses: actions/setup-node@v6.5.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # Habilita o corepack, necessário para usar o Yarn moderno
+      - name: Enable Corepack
+        run: corepack enable
+
+      # Instala as dependências do projeto
+      - name: Install Dependencies
+        run: yarn install
+
+      # Instalação do chromium
+      - name: Install Playwright Browser
+        run: yarn playwright install --with-deps chromium
+
+      # Executa a suíte de testes e2e
+      - name: Run E2E Tests
+        run: yarn playwright test tests/e2e/online.spec.ts
+        env:
+          BASE_URL: ${{ needs.build-and-deploy.outputs.deployment-url }}
+
+      # Arquivar resultados
+      - name: Archve Test Results
+        if: ${{ !canceled() }}
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: playwright-report
+          path: playwright-report/
