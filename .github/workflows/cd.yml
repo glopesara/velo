@@ -54,7 +54,7 @@ jobs:
       - name: Deploy Vercel Preview
         id: deploy-preview
         run: |
-          URL=$(yarn --silent vercel deploy --prebuilt --target=preview \
+          URL=$(yarn --silent vercel deploy --prebuilt --target=preview --yes \
           --token=$VERCEL_TOKEN \
           --scope=$VERCEL_SCOPE)
           echo "deployment-url=$URL" >> $GITHUB_OUTPUT
@@ -78,7 +78,7 @@ jobs:
         run: yarn playwright install --with-deps chromium
         
       - name: Pull Vercel Env for Playwright (Preview)
-        run: yarn vercel env pull .env --environment=preview --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
+        run: yarn vercel env pull .env --environment=preview --yes --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
 
       - name: Run E2E Tests
         run: yarn playwright test
@@ -116,7 +116,7 @@ jobs:
       - name: Deploy Vercel Production
         id: deploy-prod
         run: |
-          URL=$(yarn --silent vercel deploy --prebuilt --prod \
+          URL=$(yarn --silent vercel deploy --prebuilt --prod --yes \
           --token=$VERCEL_TOKEN \
           --scope=$VERCEL_SCOPE)
           echo "deployment-url=$URL" >> $GITHUB_OUTPUT
@@ -140,7 +140,7 @@ jobs:
         run: yarn playwright install --with-deps chromium
         
       - name: Pull Vercel Env for Playwright (Production)
-        run: yarn vercel env pull .env --environment=production --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
+        run: yarn vercel env pull .env --environment=production --yes --token=$VERCEL_TOKEN --scope=$VERCEL_SCOPE
 
       - name: Run E2E Tests
         run: yarn playwright test
